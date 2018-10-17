@@ -115,23 +115,7 @@ public class SerialMonitor extends Application {
 		String baudRateStr = this.baudRateDrop.getValue().toString();
 		LOGGER.log(Level.INFO, "Baud rates set to {0}, connecting...", baudRateStr);
 
-		int baudRate = 0;
-		if(baudRateStr.contains("110")) baudRate = 110;
-		else if(baudRateStr.contains("300")) baudRate = 300;
-		else if(baudRateStr.contains("600")) baudRate = 600;
-		else if(baudRateStr.contains("1200")) baudRate = 1200;
-		else if(baudRateStr.contains("2400")) baudRate = 2400;
-		else if(baudRateStr.contains("4800")) baudRate = 4800;
-		else if(baudRateStr.contains("9600")) baudRate = 9600;
-		else if(baudRateStr.contains("14400")) baudRate = 14400;
-		else if(baudRateStr.contains("19200")) baudRate = 19200;
-		else if(baudRateStr.contains("38400")) baudRate = 38400;
-		else if(baudRateStr.contains("57600")) baudRate = 57600;
-		else if(baudRateStr.contains("115200")) baudRate = 115200;
-		else if(baudRateStr.contains("128000")) baudRate = 128000;
-		else if(baudRateStr.contains("256000")) baudRate = 256000;
-
-		connectionManager.connect(baudRate);
+		connectionManager.connect(baudRateStr);
 	}
 
 	private void sendMessage(ActionEvent e) {
