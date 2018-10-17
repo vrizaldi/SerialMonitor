@@ -18,6 +18,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import jssc.SerialPortList;
 import java.sql.Timestamp;
+import javafx.stage.WindowEvent;
 
 /**
  *
@@ -111,6 +112,7 @@ public class SerialMonitor extends Application {
 		primaryStage.setScene(scene);
 		primaryStage.setMinWidth(500);
 		primaryStage.setMaxHeight(600);
+		primaryStage.setOnCloseRequest((e) -> this.terminate(e));
 		primaryStage.show();
 	}
 	
@@ -126,17 +128,14 @@ public class SerialMonitor extends Application {
 		String baudRateStr = this.baudRateDrop.getValue().toString();
 		String port = this.portDrop.getValue().toString();
 		LOGGER.log(Level.INFO, "Baud rate set to {0}, connecting through {1}...", new Object[]{baudRateStr, port});
-		updateMessageBox("Connecting...\n");
 
 		if(!connectionManager.connect(port, baudRateStr)) {
 			LOGGER.log(Level.INFO, "Connection failed");
-			updateMessageBox("Connection failed, please check the selected baud rate and COM port\n");
 		} else {
 			LOGGER.log(Level.INFO, "Connection successful");
-			updateMessageBox("Connected\n");
 			this.connectBtn.setText("Reset connection");
+				// change the connect button label
 		}
-			// change the connect button label
 	}
 
 	private void sendMessage(ActionEvent e) {
@@ -150,6 +149,11 @@ public class SerialMonitor extends Application {
 	void receiveMessage(String message) {
 		LOGGER.log(Level.INFO, "Received message: {0}", message);
 		this.updateMessageBox("[RECEIVED] " + message);
+	}
+
+	private void terminate(WindowEvent e) {
+		LOGGER.log(Level.INFO, "Terminating program...");
+		this.connectionManager.terminate();
 	}
 
 

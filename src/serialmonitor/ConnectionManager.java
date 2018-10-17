@@ -104,4 +104,16 @@ class ConnectionManager {
 			LOGGER.log(Level.SEVERE, "Error occurred when reading message: {0}", ex.toString());
 		}
 	}
+
+
+
+	// terminate program
+	void terminate() {
+		try {
+			LOGGER.log(Level.INFO, "Closing port...");
+			this.serialPort.closePort();
+	 	} catch(SerialPortException ex) {
+			LOGGER.log(Level.SEVERE, "Error occurred when closing port: {0}", ex.toString());
+		}
+	}
 }
