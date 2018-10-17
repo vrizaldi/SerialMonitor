@@ -5,12 +5,11 @@
  */
 package serialmonitor;
 
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jssc.SerialPort;
+import jssc.SerialPortEvent;
 import jssc.SerialPortException;
-import jssc.SerialPortList;
 
 /**
  *
@@ -21,37 +20,53 @@ class ConnectionManager {
 	private static final Logger LOGGER = Logger.getLogger(ConnectionManager.class.getName());
 
 	private SerialPort serialPort;
+	private SerialMonitor serialMonitor;
 
-	public ConnectionManager() {
-		LOGGER.log(Level.INFO, "Available ports: {0}", Arrays.toString(SerialPortList.getPortNames()));
-
-		serialPort = new SerialPort("COM6");
+	public ConnectionManager(SerialMonitor serialMonitor) {
+		this.serialMonitor = serialMonitor;
 	}
 
-	void connect(String baudRateStr) {
 
-		if(serialPort.isOpened()) {
+
+	// connecting
+	boolean connect(final String port, final String baudRateStr) {
+
+		// close previously opened port
+		if(serialPort != null && serialPort.isOpened()) {
 			try {
 				serialPort.closePort();
 			} catch(SerialPortException e) {
 				LOGGER.log(Level.SEVERE, "Error occurred when closing port: {0}", e.toString());
+				return false;
 			}
 		}
 
 
+		// convert baud rate into serial port baud rate constants
 		int baudRate = ConnectionManager.strToBaudRateConst(baudRateStr);
+		if(baudRate == -1) return false;
+
+		// connect
 		try {
-			LOGGER.log(Level.INFO, "Connecting with baud rate of {0}...", baudRateStr);
+			LOGGER.log(Level.INFO, "Connecting through {0} with baud rate of {1}...", 
+				new Object[]{port, baudRateStr});
+			serialPort = new SerialPort(port);
 			serialPort.openPort();
-			serialPort.setParams(baudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-			LOGGER.log(Level.INFO, "Connection successful", baudRateStr);
+			serialPort.setParams(
+				baudRate, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+			serialPort.addEventListener((e) -> this.receiveMessage(e));
 
 		} catch(SerialPortException e) {
 			LOGGER.log(Level.SEVERE, "Error occurred when connecting: {0}", e.toString());
+			return false;
 		}
+
+
+		LOGGER.log(Level.INFO, "Connection successful");
+		return true;
 	}
 	
-	static int strToBaudRateConst(String baudRateStr) {
+	static int strToBaudRateConst(final String baudRateStr) {
 		if(baudRateStr.contains("110")) return SerialPort.BAUDRATE_110;
 		else if(baudRateStr.contains("300")) return SerialPort.BAUDRATE_300;
 		else if(baudRateStr.contains("600")) return SerialPort.BAUDRATE_600;
@@ -66,5 +81,27 @@ class ConnectionManager {
 		else if(baudRateStr.contains("128000")) return SerialPort.BAUDRATE_128000;
 		else if(baudRateStr.contains("256000")) return SerialPort.BAUDRATE_256000;
 		else return -1;
+	}
+
+
+
+	// sending message
+	void sendMessage(final String message) {
+		try {
+			this.serialPort.writeString(message);
+		} catch(SerialPortException e) {
+			LOGGER.log(Level.SEVERE, "Error occurred when sending message: {0}", e.toString());
+		}
+	}
+
+
+
+	// receiving message
+	private void receiveMessage(SerialPortEvent e) {
+		try {
+			this.serialMonitor.receiveMessage(serialPort.readString());
+		} catch(SerialPortException ex) {
+			LOGGER.log(Level.SEVERE, "Error occurred when reading message: {0}", ex.toString());
+		}
 	}
 }

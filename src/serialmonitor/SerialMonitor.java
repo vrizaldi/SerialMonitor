@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import jssc.SerialPortList;
+import java.sql.Timestamp;
 
 /**
  *
@@ -34,11 +35,15 @@ public class SerialMonitor extends Application {
 	private ComboBox baudRateDrop;
 	private ComboBox portDrop;
 	private Button sendBtn;
+
+	private String messages;
 	
 	@Override
 	public void start(Stage primaryStage) {
 
-		connectionManager = new ConnectionManager();
+		connectionManager = new ConnectionManager(this);
+
+		messages = "";
 
 		this.initUIParts();
 		this.initEventHandlers();
@@ -69,13 +74,14 @@ public class SerialMonitor extends Application {
 		this.portDrop = new ComboBox();
 		this.portDrop.getItems().addAll((Object[])SerialPortList.getPortNames());
 		this.portDrop.setValue("COM Port");
-		this.portDrop.setPrefSize(105, 50);;
+		this.portDrop.setPrefSize(105, 50);
 		
 		// message box
 		this.messageBox = new TextArea();
 		this.messageBox.setPrefSize(500, 500);
 		this.messageBox.setEditable(false);
 		this.messageBox.setFocusTraversable(false);
+		this.messageBox.setWrapText(true);
 		
 		// for entering messages
 		this.messageField = new TextArea();	// message field
@@ -116,23 +122,45 @@ public class SerialMonitor extends Application {
 		sendBtn.setOnAction((e) -> this.sendMessage(e));
 	}
 
-	/*"110 baud", "300 baud", "600 baud", "1200 baud", "2400 baud", 
-			"4800 baud", "9600 baud", "14400 baud", "19200 baud", "38400 baud", 
-			"57600 baud", "115200 baud", "128000 baud", "256000 baud"*/
 	private void connect(ActionEvent e) {
 		String baudRateStr = this.baudRateDrop.getValue().toString();
-		LOGGER.log(Level.INFO, "Baud rates set to {0}, connecting...", baudRateStr);
+		String port = this.portDrop.getValue().toString();
+		LOGGER.log(Level.INFO, "Baud rate set to {0}, connecting through {1}...", new Object[]{baudRateStr, port});
+		updateMessageBox("Connecting...\n");
 
-		connectionManager.connect(baudRateStr);
-
-		// change the connect button label
-		
+		if(!connectionManager.connect(port, baudRateStr)) {
+			LOGGER.log(Level.INFO, "Connection failed");
+			updateMessageBox("Connection failed, please check the selected baud rate and COM port\n");
+		} else {
+			LOGGER.log(Level.INFO, "Connection successful");
+			updateMessageBox("Connected\n");
+			this.connectBtn.setText("Reset connection");
+		}
+			// change the connect button label
 	}
 
 	private void sendMessage(ActionEvent e) {
-		LOGGER.info("Sending message...");
+		String message = this.messageField.getText() + "\n";
+		this.messageField.setText("");		// empty message field
+		LOGGER.log(Level.INFO, "Sending message: {0}", message);
+		this.connectionManager.sendMessage(message);
+		this.updateMessageBox("[SENT] " + message);
 	}
 
+	void receiveMessage(String message) {
+		LOGGER.log(Level.INFO, "Received message: {0}", message);
+		this.updateMessageBox("[RECEIVED] " + message);
+	}
+
+
+
+	// update message box on changes
+	private void updateMessageBox(String message) {
+
+		this.messages += new Timestamp(System.currentTimeMillis()).toString() + " " + message;	
+		this.messageBox.setText(messages);
+		this.messageBox.setScrollTop(Double.MAX_VALUE);
+	}
 
 
 	
