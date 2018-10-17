@@ -16,6 +16,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import jssc.SerialPortList;
 
 /**
  *
@@ -31,6 +32,7 @@ public class SerialMonitor extends Application {
 	private TextArea messageBox;
 	private TextArea messageField;
 	private ComboBox baudRateDrop;
+	private ComboBox portDrop;
 	private Button sendBtn;
 	
 	@Override
@@ -51,7 +53,7 @@ public class SerialMonitor extends Application {
 
 		// connect button
 		this.connectBtn = new Button("Connect");
-		this.connectBtn.setPrefSize(400, 50);
+		this.connectBtn.setPrefSize(300, 50);
 		
 		// baud rate list
 		this.baudRateDrop = new ComboBox();
@@ -60,8 +62,14 @@ public class SerialMonitor extends Application {
 			"4800 bauds", "9600 bauds", "14400 bauds", "19200 bauds", "38400 bauds", 
 			"57600 bauds", "115200 bauds", "128000 bauds", "256000 bauds"
 		);
-		this.baudRateDrop.setValue("9600 bauds");
-		this.baudRateDrop.setPrefSize(110, 50);
+		this.baudRateDrop.setValue("Baud rate");
+		this.baudRateDrop.setPrefSize(105, 50);
+
+		// com port list
+		this.portDrop = new ComboBox();
+		this.portDrop.getItems().addAll((Object[])SerialPortList.getPortNames());
+		this.portDrop.setValue("COM Port");
+		this.portDrop.setPrefSize(105, 50);;
 		
 		// message box
 		this.messageBox = new TextArea();
@@ -82,7 +90,7 @@ public class SerialMonitor extends Application {
 		// initialise the layout for the ui parts
 	
 		HBox connectionSetting = new HBox();
-		connectionSetting.getChildren().addAll(this.connectBtn, this.baudRateDrop);
+		connectionSetting.getChildren().addAll(this.connectBtn, this.baudRateDrop, this.portDrop);
 
 		HBox userInput = new HBox();
 		userInput.getChildren().addAll(messageField, sendBtn);
@@ -116,6 +124,9 @@ public class SerialMonitor extends Application {
 		LOGGER.log(Level.INFO, "Baud rates set to {0}, connecting...", baudRateStr);
 
 		connectionManager.connect(baudRateStr);
+
+		// change the connect button label
+		
 	}
 
 	private void sendMessage(ActionEvent e) {
